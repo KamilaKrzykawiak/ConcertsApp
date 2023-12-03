@@ -47,6 +47,7 @@ class EventModelView {
     }
 }
 
+
 //podpiac gita
 // do dorobienia
 // padding w całej liście lazycośtam
