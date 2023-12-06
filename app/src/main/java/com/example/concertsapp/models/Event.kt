@@ -1,6 +1,6 @@
 package com.example.concertsapp.models
 
-data class Concert(
+data class Event(
     val id : String,
     val name : String,
     val type : String,
