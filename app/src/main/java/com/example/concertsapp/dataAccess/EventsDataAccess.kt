@@ -20,12 +20,17 @@ import kotlin.coroutines.suspendCoroutine
 class EventsDataAccess(private val appContext: Context) : PagingSource<Int, Event>() {
     private var events = MutableLiveData<PageData<Event>>()
     val readEvents: LiveData<PageData<Event>> get() = events
+    var search :String = ""
+
+    fun setQuerySearch(search: String){
+        this.search = search
+    }
 
     private suspend fun getEvents(page: Int) = suspendCoroutine<PageData<Event>> { cont ->
 
         val queue = MySingleton.getInstance(this.appContext).requestQueue
         val url =
-            "https://app.ticketmaster.com/discovery/v2/events.json?apikey=qDPB4SA8ARvlbWPdL90LHd3oV2GsTQka&size=21&page=${page}"
+            "https://app.ticketmaster.com/discovery/v2/events.json?apikey=qDPB4SA8ARvlbWPdL90LHd3oV2GsTQka&size=21&keyword=${search}&page=${page}"
         //defaultowo 20 pozycji &size=21 pozwoliło na zapełnienie strony
 
         // in Activity
@@ -34,6 +39,7 @@ class EventsDataAccess(private val appContext: Context) : PagingSource<Int, Even
 
             Request.Method.GET, url, null,
             { response ->
+
                 val eventsResponse = response.getJSONObject("_embedded")
                     .getJSONArray("events")//tutaj lista 15 eventów
                 val typeToken = object : TypeToken<List<Event>>() {}.type
@@ -44,7 +50,7 @@ class EventsDataAccess(private val appContext: Context) : PagingSource<Int, Even
                 )
                 pageData.data = json
                 events.value = pageData
-//                println(pageData) //jakby dalej się zacinało
+              //  println(eventsResponse[0].getJSONObject("keyword")) //jakby dalej się zacinało
                 cont.resume(pageData)
 
                 //               println(pageData)

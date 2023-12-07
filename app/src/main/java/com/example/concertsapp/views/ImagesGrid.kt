@@ -1,9 +1,14 @@
 package com.example.concertsapp.views
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.MaterialTheme
@@ -35,7 +40,7 @@ class ImagesGrid : ComponentActivity() {
                     color = MaterialTheme.colors.background
                 ) {
                     attractionImageModelView = AttractionImageModelView(applicationContext)
-                    ImagesGridLayout(attractionImageModelView)
+                    ImagesGridLayout(attractionImageModelView, this)
                 }
             }
         }
@@ -43,14 +48,14 @@ class ImagesGrid : ComponentActivity() {
 }
 
 @Composable
-fun ImagesGridLayout(viewModel: AttractionImageModelView) {
+fun ImagesGridLayout(viewModel: AttractionImageModelView, activityContext: Context) {
     val attractionImage: LazyPagingItems<AttractionImage> =
         viewModel.attractionsImageData.collectAsLazyPagingItems()
 
     Scaffold(
         topBar =
         { TopAppBar() },
-        bottomBar = { BottomAppBarMine() }
+        bottomBar = { BottomAppBarMine (activityContext) }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -58,6 +63,7 @@ fun ImagesGridLayout(viewModel: AttractionImageModelView) {
         ) {
             LazyColumn(
                 modifier = Modifier.padding(5.dp, 10.dp)
+
             ) {
                 items(items = attractionImage) { attractionImage ->
                     if (attractionImage != null) {
@@ -85,7 +91,9 @@ fun ImagesGridCard(attractionImage: AttractionImage) {
             contentDescription = "Translated description of what the image contains",
             modifier = Modifier
                 .fillMaxSize()
+                .border(2.dp, androidx.compose.ui.graphics.Color.DarkGray)
                 .padding(5.dp, 5.dp)
+
         )
 
     }

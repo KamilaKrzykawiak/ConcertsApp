@@ -2,12 +2,16 @@ package com.example.concertsapp.views
 
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,10 +23,9 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
@@ -43,11 +46,13 @@ class ConcertList : ComponentActivity() {
             ConcertsAppTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(),
                     color = MaterialTheme.colors.background
                 ) {
                     eventModelView = EventModelView(applicationContext)
-                    ConcertCardLayout(eventModelView)
+                    ConcertCardLayout(eventModelView, this)
                 }
             }
         }
@@ -96,14 +101,19 @@ data class PagingPlaceholderKey(private val index: Int) : Parcelable {
 
 
 @Composable
-fun ConcertCard(event: Event) {
+fun ConcertCard(event: Event, activityContext: Context) {
 
 
 //    Image(
 //    painter = pai(id = concert.images.get(0).URL),
 //    contentDescription = stringResource(id = R.string.dog_content_description))
 
-    Column {
+    Column(modifier = Modifier.clickable {
+        val myIntent = Intent(activityContext, ConcertDetails::class.java)
+        myIntent.putExtra("id", event.id)
+        activityContext.startActivity(myIntent)
+    }) {
+
 
         AsyncImage(
             model = event.images[0].url,
@@ -115,6 +125,7 @@ fun ConcertCard(event: Event) {
         )
         Text(
             text = event.name,
+            color = Color.Black,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .width(130.dp)
@@ -123,6 +134,7 @@ fun ConcertCard(event: Event) {
 
         Text(
             text = "Type: " + event.type,
+            color = Color.Black,
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .width(130.dp)
@@ -132,107 +144,71 @@ fun ConcertCard(event: Event) {
 }
 
 @Composable
-fun ConcertCardLayout(viewModel: EventModelView) {
+fun ConcertCardLayout(viewModel: EventModelView, activityContext: Context) {
     val events: LazyPagingItems<Event> = viewModel.eventsData.collectAsLazyPagingItems()
+    var text by remember { mutableStateOf("") }
 
     Scaffold(
         topBar =
         { TopAppBar() },
-        bottomBar = { BottomAppBarMine() }
+        bottomBar = { BottomAppBarMine(activityContext) }
     ) { innerPadding ->
         Box(
             modifier = Modifier
                 .padding(innerPadding)
+                .padding(5.dp)
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 125.dp),
-                modifier = Modifier.padding(5.dp, 10.dp),
+            Column() {
 
-                ) {
-                // Add a single item
-                itemsPaging(items = events) { events ->
-                    if (events != null) {
-                        ConcertCard(event = events)
+                Row(
+                    modifier = Modifier
+                        .background(color = Color.LightGray),
+
+                    ) {
+
+                    IconButton(
+
+                        onClick = {
+                            viewModel.setSearch(text)
+                            events.refresh()
+                        }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Localized description",
+                        )
+                    }
+                    TextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(color = Color.LightGray),
+
+                        value = text,
+                        onValueChange = { text = it },
+                        label = { Text("Search", color = Color.Black) }
+                    )
+
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .padding(top = (60.dp))
+
+            ) {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 120.dp),
+
+
+                    ) {
+                    // Add a single item
+                    itemsPaging(items = events) { events ->
+                        if (events != null) {
+                            ConcertCard(event = events, activityContext)
+                        }
                     }
                 }
             }
         }
     }
-
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TopAppBar() {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    CenterAlignedTopAppBar(
-        colors = TopAppBarDefaults.topAppBarColors(Color.Gray),
-        title = {
-            Text(
-                "Concerts App",
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .width(130.dp)
-            )
-        },
-        actions = {
-            IconButton(onClick = { /* wyswietlac pole do wyszukiwania w miejscu nazwy apki */ }) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = "Localized description"
-                )
-            }
-        },
-        scrollBehavior = scrollBehavior,
-    )
-}
-
-
-@Composable
-//zmienić na BottomNavigation https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary#BottomNavigation(androidx.compose.ui.Modifier,androidx.compose.ui.graphics.Color,androidx.compose.ui.graphics.Color,androidx.compose.ui.unit.Dp,kotlin.Function1)
-fun BottomAppBarMine() {
-    BottomAppBar(
-        actions = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-
-                Column(
-                    modifier = Modifier
-                        .padding(5.dp, 5.dp)
-                ) {
-                    IconButton(onClick = {
-                        /* lista wydarzeń */
-//                        val appContext =  LocalContext.current
-//                        Intent(appContext,ImagesGrid::class.java).also {
-//                            startActivity(it)}
-                        })
-                     {
-                        Icon(
-                            imageVector = Icons.Filled.List,
-                            contentDescription = "Localized description"
-                        )
-                    }
-                    Text("Events")
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(5.dp, 5.dp)
-                ) {
-                    IconButton(onClick = { /* zdjęcia */ }) {
-                        Icon(
-                            imageVector = Icons.Filled.AccountBox,
-                            contentDescription = "Localized description"
-                        )
-                    }
-                    Text("Gallery")
-                }
-            }
-        }
-    )
 }
 
 
